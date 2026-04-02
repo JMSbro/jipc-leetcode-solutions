@@ -22,14 +22,31 @@ while IFS= read -r -d '' dir; do
   mapfile -t files < <(find "$dir" -maxdepth 1 -type f ! -name "README.md" -print0 | xargs -0 -n1)
 
   # Relative path for heading ("." for root)
-  rel="${dir#$ROOT_DIR/}"
-  [[ -z "$rel" ]] && rel="."
+  if [[ "$dir" == "$ROOT_DIR" ]]; then
+    rel="."
+  else
+    rel="${dir#$ROOT_DIR/}"
+  fi
 
   readme_path="$dir/README.md"
   {
-    echo "# ${rel} Leetcode Solutions"
+    if [[ "$rel" == "." ]]; then
+      echo "# JIPC Leetcode Solutions"
+    else
+      echo "# ${rel} Leetcode Solutions"
+    fi
     echo
-    if [[ ${#files[@]} -eq 0 ]]; then
+    if [[ "$rel" == "." ]]; then
+      echo "## Topic Folders"
+      echo
+      for subdir in "$dir"/*/; do
+        if [[ -d "$subdir" ]]; then
+          topic="$(basename "$subdir")"
+          encoded=$(url_encode "$topic")
+          echo "- [${topic}](./${encoded}/README.md)"
+        fi
+      done
+    elif [[ ${#files[@]} -eq 0 ]]; then
       echo "*(No solution files in this directory)*"
     else
       echo "## File Index"
